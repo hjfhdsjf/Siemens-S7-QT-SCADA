@@ -1,10 +1,10 @@
 <!--
  * @Author: Magic
  * @Date: 2025-04-11 21:41:40
- * @LastEditTime: 2025-04-11 21:55:56
+ * @LastEditTime: 2025-04-11 22:05:14
  * @node: 
 -->
-# S7助手_V1.0_by_Magic
+# S7助手_V1.0
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
