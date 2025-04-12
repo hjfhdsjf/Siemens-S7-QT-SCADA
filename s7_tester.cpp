@@ -12,11 +12,12 @@
  *
  * @author  Magic
  * @date    2024-03-10 创建
- * @date    2024-03-11 最后修改
+ * @date    2024-03-12 最后修改
  *
  * @note
  * - 修改记录：
- *   2025-4-10 实现基础功能 V1.0 *
+ *   2025-4-10 实现基础功能 V1.0
+ *   2025-4-12 增加停止plc后自动清除所有任务 V1.0.1
  *
  *         .--,       .--,
  *       ( (  \.---./  ) )
@@ -467,7 +468,8 @@ void S7_Tester::TaskMessage(const QString &msg, LogType type) {
                         .arg(color).arg(timeStr).arg(msg));
 }
 
-// 在S7_Tester类中添加槽函数实现
+//————————————————————————————
+// 日志输出总数
 void S7_Tester::onClearInfoLogClicked()
 {
     textLog->clear();
@@ -524,6 +526,10 @@ bool S7_Tester::parseAddress(const QString &address, int &byteAddr, int &bitOffs
 // PLC 连接槽函数
 void S7_Tester::onConnectClicked()
 {
+    if (!isConnectClicked()){
+        logMessage(tr("【提示】PLC已连接！！！"),Warning);
+        return;
+    }
     QString ip = editIp->text().trimmed();
     int rack = editRack->text().toInt();
     int slot = editSlot->text().toInt();
@@ -535,12 +541,36 @@ void S7_Tester::onConnectClicked()
 
 void S7_Tester::onDisconnectClicked()
 {
-    if (isConnectClicked()){
-        logMessage(tr("【提示】请先连接PLC！！！"),Warning);
+    if (isConnectClicked()) { // 检查PLC是否未连接
+        logMessage(tr("【提示】PLC未连接！"), Warning);
         return;
     }
+
+    // 停止并清理所有循环读任务
+    for (auto &item : taskList) {
+        if (item.worker) {
+            item.worker->stop();
+        }
+        if (item.thread) {
+            item.thread->quit();
+            item.thread->wait();
+            delete item.thread;
+            item.thread = nullptr;
+        }
+    }
+    // 清空任务列表和界面列表
+    taskList.clear();
+    listTask->clear();
+
+    // 重置可用任务ID为1-10
+    availableTaskIds.clear();
+    for (int i = 1; i <= 10; ++i) {
+        availableTaskIds.append(i);
+    }
+
+    // 断开PLC连接
     s7->Disconnect();
-    logMessage(tr("【提示】PLC已断开连接！"),Warning);
+    logMessage(tr("【提示】PLC已断开连接，所有任务已停止并清除！"), Warning);
 }
 
 bool S7_Tester::isConnectClicked(){
